@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:weather_api/services/location_service.dart';
 
 class LocationProvider extends ChangeNotifier {
   Position? _currentPosition;
   Position? get currentPostion => _currentPosition;
+
+  final LocationService _locationService = LocationService();
+  Placemark? _currentLocationName;
+  Placemark? get currentLocationName => _currentLocationName;
 
   Future<void> determinePosition() async {
     bool serviceEnabled;
@@ -31,6 +37,11 @@ class LocationProvider extends ChangeNotifier {
     }
     _currentPosition = await Geolocator.getCurrentPosition();
     print(_currentPosition);
+
+    _currentLocationName =
+        await _locationService.getLocationName(_currentPosition);
+    print(_currentLocationName);
+
     notifyListeners();
   }
 }

@@ -3,7 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:weather_api/services/location_provider.dart';
- 
+import 'package:weather_api/services/weather_service_provider.dart';
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -15,6 +16,10 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     Provider.of<LocationProvider>(context, listen: false).determinePosition();
+
+    Provider.of<WeatherServiceProvider>(context, listen: false)
+        .fetchWeatherDataByCity("California");
+
     super.initState();
   }
 
@@ -22,6 +27,8 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
+    // final locationProvider = Provider.of<LocationProvider>(context);
+    // locationProvider.
     return Scaffold(
       backgroundColor: Colors.black,
       extendBodyBehindAppBar: true,
@@ -53,50 +60,63 @@ class _HomePageState extends State<HomePage> {
                 : SizedBox.shrink(),
             Container(
               height: 50,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.location_on,
-                          color: Colors.red,
-                        ),
-                        SizedBox(width: 5),
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
+              child: Consumer<LocationProvider>(
+                builder: (context, locationProvider, child) {
+                  var locationLocality;
+                  if (locationProvider.currentLocationName != null) {
+                    locationLocality =
+                        locationProvider.currentLocationName!.locality;
+                  } else {
+                    locationLocality = "Unknown Location";
+                  }
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        child: Row(
                           children: [
-                            Text(
-                              "Dubai",
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18),
+                            Icon(
+                              Icons.location_on,
+                              color: Colors.red,
                             ),
-                            Text(
-                              "Dubai",
-                              style: TextStyle(
-                                color: Colors.white,
-                              ),
+                            SizedBox(width: 5),
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  locationLocality.isEmpty
+                                      ? "Unkonwm Location"
+                                      : locationLocality,
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18),
+                                ),
+                                Text(
+                                  "Dubai",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                  ),
+                                )
+                              ],
                             )
                           ],
-                        )
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                      onPressed: () {
-                        setState(() {
-                          _clicked = !_clicked;
-                        });
-                      },
-                      icon: Icon(
-                        Icons.search,
-                        size: 40,
-                      ))
-                ],
+                        ),
+                      ),
+                      IconButton(
+                          onPressed: () {
+                            setState(() {
+                              _clicked = !_clicked;
+                            });
+                          },
+                          icon: Icon(
+                            Icons.search,
+                            size: 40,
+                          ))
+                    ],
+                  );
+                },
               ),
             ),
             Align(
