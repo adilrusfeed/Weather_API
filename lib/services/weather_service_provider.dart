@@ -29,7 +29,7 @@ class WeatherServiceProvider extends ChangeNotifier {
         print(data);
 
         _weather = WeatherModel.fromJson(data);
-        print(_weather!);
+        print(_weather!.temp.toString()); 
         notifyListeners();
       } else {
         _error = "Couldn't find the City! Try Again.";

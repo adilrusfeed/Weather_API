@@ -1,7 +1,9 @@
-// ignore_for_file: prefer_const_constructors, sized_box_for_whitespace, prefer_const_literals_to_create_immutables, avoid_unnecessary_containers
+// ignore_for_file: prefer_const_constructors, sized_box_for_whitespace, prefer_const_literals_to_create_immutables, avoid_unnecessary_containers, prefer_final_fields
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+
 import 'package:weather_api/services/location_provider.dart';
 import 'package:weather_api/services/weather_service_provider.dart';
 
@@ -15,20 +17,39 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   @override
   void initState() {
-    Provider.of<LocationProvider>(context, listen: false).determinePosition();
-
-    Provider.of<WeatherServiceProvider>(context, listen: false)
-        .fetchWeatherDataByCity("California");
+    final locationProvider =
+        Provider.of<LocationProvider>(context, listen: false);
+    // final locationProvider = Provider.of<LocationProvider>(context);
+    // final weatherProvider =
+    //     Provider.of<WeatherServiceProvider>(context, listen: false);
+    locationProvider.determinePosition().then((_) {
+      if (locationProvider.currentLocationName != null) {
+        var city = locationProvider.currentLocationName!.locality;
+        if (city != null) {
+          Provider.of<WeatherServiceProvider>(context, listen: false)
+              .fetchWeatherDataByCity(city);
+        }
+      }
+    });
 
     super.initState();
+  }
+
+  TextEditingController _searchController = TextEditingController();
+  var city;
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   bool _clicked = false;
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
-    // final locationProvider = Provider.of<LocationProvider>(context);
-    // locationProvider.
+    final locationProvider = Provider.of<LocationProvider>(context);
+    final weatherProvider = Provider.of<WeatherServiceProvider>(context);
+
     return Scaffold(
       backgroundColor: Colors.black,
       extendBodyBehindAppBar: true,
@@ -42,22 +63,6 @@ class _HomePageState extends State<HomePage> {
                 fit: BoxFit.cover, image: AssetImage("assets/img/clouds.jpg"))),
         child: Stack(
           children: [
-            _clicked == true
-                ? Positioned(
-                    top: 60,
-                    right: 20,
-                    left: 20,
-                    child: Container(
-                      height: 45,
-                      child: TextFormField(
-                        decoration: InputDecoration(
-                            focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white),
-                        )),
-                      ),
-                    ),
-                  )
-                : SizedBox.shrink(),
             Container(
               height: 50,
               child: Consumer<LocationProvider>(
@@ -85,16 +90,14 @@ class _HomePageState extends State<HomePage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  locationLocality.isEmpty
-                                      ? "Unkonwm Location"
-                                      : locationLocality,
+                                  locationLocality,
                                   style: TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 18),
                                 ),
                                 Text(
-                                  "Dubai",
+                                  "Good Morning",
                                   style: TextStyle(
                                     color: Colors.white,
                                   ),
@@ -125,30 +128,39 @@ class _HomePageState extends State<HomePage> {
             Align(
               alignment: Alignment.center,
               child: Container(
-                height: 130,
+                height: 150,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      "21°C",
+                      " ${weatherProvider.weather?.temp?.toStringAsFixed(2)}\u00B0 C" ??
+                          "N/A",
                       style: TextStyle(
                           color: Colors.white,
                           fontSize: 30,
                           fontWeight: FontWeight.w700),
                     ),
                     Text(
-                      "Cloudy",
+                      weatherProvider.weather?.name ?? "N/A",
                       style: TextStyle(
                           color: Colors.white,
-                          fontSize: 25,
+                          fontSize: 22,
                           fontWeight: FontWeight.w700),
                     ),
                     Text(
-                      DateTime.now().toString(),
+                      weatherProvider.weather?.clouds ?? "N/A",
                       style: TextStyle(
                           color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w300),
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700),
+                    ),
+                    Text(
+                      DateFormat("hh:mm a | EEE   dd-MM-yyyy")
+                          .format(DateTime.now()),
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w500),
                     )
                   ],
                 ),
@@ -181,7 +193,8 @@ class _HomePageState extends State<HomePage> {
                                         style: TextStyle(
                                             color: Colors.white,
                                             fontWeight: FontWeight.bold)),
-                                    Text("21°C",
+                                    Text(
+                                        "${weatherProvider.weather?.temp_max!.toStringAsFixed(2)}\u00b0 C",
                                         style: TextStyle(
                                             color: Colors.white,
                                             fontWeight: FontWeight.w600))
@@ -203,7 +216,8 @@ class _HomePageState extends State<HomePage> {
                                         style: TextStyle(
                                             color: Colors.white,
                                             fontWeight: FontWeight.bold)),
-                                    Text("21°C",
+                                    Text(
+                                        "${weatherProvider.weather?.temp_min!.toStringAsFixed(2)}\u00b0 C",
                                         style: TextStyle(
                                             color: Colors.white,
                                             fontWeight: FontWeight.w600))
@@ -232,16 +246,31 @@ class _HomePageState extends State<HomePage> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text("Temp Max",
-                                        style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold)),
-                                    Text("21°C",
-                                        style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w600))
+                                    Text(
+                                      "Sunrise",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      weatherProvider.weather?.sunrise != null
+                                          ? DateFormat("hh:mm a").format(
+                                              DateTime
+                                                  .fromMillisecondsSinceEpoch(
+                                                weatherProvider
+                                                        .weather!.sunrise! *
+                                                    1000,
+                                              ),
+                                            )
+                                          : "N/A",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
                                   ],
-                                )
+                                ),
                               ],
                             ),
                             Row(
@@ -254,21 +283,65 @@ class _HomePageState extends State<HomePage> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text("Temp min",
-                                        style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold)),
-                                    Text("21°C",
-                                        style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w600))
+                                    Text(
+                                      "Sunset",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      weatherProvider.weather?.sunrise != null
+                                          ? DateFormat("hh:mm a").format(
+                                              DateTime
+                                                  .fromMillisecondsSinceEpoch(
+                                                weatherProvider
+                                                        .weather!.sunset! *
+                                                    1000,
+                                              ),
+                                            )
+                                          : "N/A",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
                                   ],
-                                )
+                                ),
                               ],
                             ),
                           ],
                         ),
                       ])),
+            ),
+            Positioned(
+              top: 60,
+              right: 20,
+              left: 20,
+              child: Container(
+                height: 45,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _searchController,
+                        decoration: InputDecoration(
+                            hintText: "search city...",
+                            focusedBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(color: Colors.white),
+                            )),
+                      ),
+                    ),
+                    IconButton(
+                        onPressed: () {
+                          print(_searchController.text);
+                          weatherProvider
+                              .fetchWeatherDataByCity(_searchController.text);
+                        },
+                        icon: Icon(Icons.search))
+                  ],
+                ),
+              ),
             )
           ],
         ),
