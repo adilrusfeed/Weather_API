@@ -2,9 +2,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:weather_api/controller/connecting_provider.dart';
+import 'package:weather_api/controller/weather_provider.dart';
 import 'package:weather_api/screens/home_page.dart';
-import 'package:weather_api/services/location_provider.dart';
-import 'package:weather_api/services/weather_service_provider.dart';
+
 
 void main() {
   runApp(const MyApp());
@@ -19,10 +20,10 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (context) => LocationProvider(),
+          create: (context) => WeatherProvider(),
         ),
-         ChangeNotifierProvider(
-          create: (context) => WeatherServiceProvider(),
+        ChangeNotifierProvider(
+          create: (context) => InternetConnectivityProvider(),
         )
       ],
       child: MaterialApp(
@@ -33,7 +34,7 @@ class MyApp extends StatelessWidget {
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
             useMaterial3: true,
           ),
-          home: const HomePage()),
+          home:  HomePage()),
     );
   }
 }
