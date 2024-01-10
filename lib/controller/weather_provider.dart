@@ -1,27 +1,34 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:weather_api/models/weather_model.dart';
-import 'package:weather_api/services/weather_service_provider.dart';
-
+import 'package:weather_api/services/weather_service.dart';
 
 class WeatherProvider extends ChangeNotifier {
   TextEditingController searchController = TextEditingController();
   bool isLoading = false;
-  WeatherModel? data;
+  WeatherModel? weather;
 
-  Future<WeatherModel?> getData(String place) async {
+  final WeatherService weatherService = WeatherService();
+  Future<WeatherModel?> fetchWeatherDataByCity(city, context) async {
     isLoading = true;
     notifyListeners();
+    try {
+      weather = await weatherService.fetchWeatherDataByCity(city, context);
+    } catch (e) {
+      log('Exception occurred while fetching weather: $e');
 
-    data = await WeatherApiClient().getCurrentWeather(place);
-
-    isLoading = false;
-    notifyListeners();
-
-    return data;
+      weather = null;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+    return weather;
   }
 
-  void getdata() {
-    data = null;
+  void searchCity(BuildContext context) {
+    fetchWeatherDataByCity(searchController.text.trim(), context);
+    searchController.clear();
     notifyListeners();
   }
 }

@@ -1,146 +1,389 @@
+// ignore_for_file: prefer_const_constructors
+
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:weather_api/controller/connecting_provider.dart';
+import 'package:weather_api/controller/home_provider.dart';
+import 'package:weather_api/controller/location_provider.dart';
 import 'package:weather_api/controller/weather_provider.dart';
-import 'package:weather_api/screens/view/additional_info.dart';
-import 'package:weather_api/screens/view/presentWeather.dart';
+
+TextEditingController cityCoontroller = TextEditingController();
 
 class HomePage extends StatelessWidget {
-  HomePage({Key? key}) : super(key: key);
+  HomePage({super.key});
+
+  // final date = DateFormat(' EEEE dd-MM-yyyy').format(DateTime.now());
+  // final time = DateFormat('hh:mm a').format(DateTime.now());
 
   @override
   Widget build(BuildContext context) {
-    Provider.of<InternetConnectivityProvider>(context, listen: false)
-        .getInternetConnectivity(context);
+    final size = MediaQuery.of(context).size;
+    final homeprovider = Provider.of<HomeProvider>(context, listen: false);
+    homeprovider.checkInternetAndFetchData(context);
+    var currentTime = DateTime.now().hour;
+    String greeting;
+    if (currentTime >= 4 && currentTime < 12) {
+      greeting = "Good Morining";
+    } else if (currentTime >= 12 && currentTime < 17) {
+      greeting = "Good Afternoon";
+    } else {
+      greeting = "Good Evening";
+    }
 
-    return SafeArea(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Container(
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      body: SingleChildScrollView(
+        scrollDirection: Axis.vertical,
+        child: Container(
+          padding: const EdgeInsets.all(15),
+          height: size.height,
+          width: size.width,
           decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.lightBlueAccent, Colors.white],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-          ),
-          child: Stack(
-            fit: StackFit.expand,
+              image: DecorationImage(
+                  fit: BoxFit.fill,
+                  image: AssetImage("assets/img/thunder.jpg"))),
+          child: Column(
             children: [
-              SingleChildScrollView(
-                child: Consumer<WeatherProvider>(
-                  builder: (context, value, child) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
+              const SizedBox(
+                height: 50,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    child: Row(
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.all(30),
-                          child: TextFormField(
-                            onFieldSubmitted: (String place) {
-                              value.getData(place);
-                            },
-                            controller: value.searchController,
-                            cursorColor: Colors.white,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                            ),
-                            decoration: InputDecoration(
-                              contentPadding:
-                                  const EdgeInsets.only(top: 18, left: 10),
-                              isDense: true,
-                              hintText: "Search",
-                              hintStyle: const TextStyle(color: Colors.grey),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(15),
-                                borderSide:
-                                    const BorderSide(color: Colors.white),
+                        Icon(Icons.location_on, color: Colors.red),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        Consumer<LocatorProvider>(
+                          builder: (context, value, child) => Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                value.currentLocationName?.locality ??
+                                    "unknown location",
+                                style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color.fromARGB(255, 255, 255, 255)),
                               ),
-                              prefixIcon: Padding(
-                                padding: const EdgeInsets.all(10),
-                                child: Lottie.asset(
-                                  'assets/img/Animation - 1704821434187.json', // Replace with the correct path
-                                  width: 26,
-                                  height: 26,
+                              Text(
+                                greeting,
+                                style: TextStyle(
+                                  color: const Color.fromARGB(255, 0, 0, 0),
                                 ),
-                              ),
-                              suffixIcon: value.searchController.text.isNotEmpty
-                                  ? IconButton(
-                                      onPressed: () {
-                                        value.searchController.clear();
-                                      },
-                                      icon: const Icon(
-                                        Icons.cancel,
-                                        color: Color.fromARGB(255, 246, 7, 7),
-                                      ),
-                                    )
-                                  : null,
-                            ),
+                              )
+                            ],
                           ),
                         ),
-                        const SizedBox(
-                          height: 20,
-                        ),
-                        if (value.isLoading)
-                          //CircularProgressIndicator() // Show loader while loading
-                          const Text(
-                            "no loction ",
-                            style: TextStyle(
-                                fontSize: 20,
-                                color: Color.fromARGB(255, 206, 144, 125)),
-                          )
-                        else if (value.data != null)
-                          presentWeather(
-                            '${value.data!.temp}',
-                            value.searchController.text.isEmpty
-                                ? "Calicut"
-                                : value.searchController.text,
-                          ),
-                        const SizedBox(
-                          height: 20,
-                        ),
-                        SizedBox(
-                          height: 150,
-                          width: 150,
-                          child: Lottie.asset(
-                            'asset/sun and moon.json',
-                          ),
-                        ),
-                        const SizedBox(
-                          height: 50.0,
-                        ),
-                        const Text(
-                          "Additional Information",
-                          style: TextStyle(
-                            fontSize: 24.0,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(
-                          height: 30.0,
-                        ),
-                        if (value.data != null)
-                          additionalInformation(
-                            "${value.data!.temp_max}",
-                            "${value.data!.temp_min}",
-                            "${value.data!.sunrise}",
-                            "${value.data!.sunset}",
-                            const BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [Colors.lightBlueAccent, Colors.white],
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                              ),
-                            ),
-                          ),
                       ],
-                    );
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(
+                height: 15,
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: cityCoontroller,
+                      decoration: InputDecoration(
+                        labelText: "Search City ...",
+                        labelStyle: const TextStyle(
+                            color: Color.fromARGB(255, 255, 255, 255)),
+                        enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30)),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      homeprovider.searchCity(context);
+                    },
+                    icon: const Icon(Icons.search),
+                    iconSize: 30,
+                  )
+                ],
+              ),
+              const SizedBox(
+                height: 80,
+              ),
+              Consumer2<WeatherProvider, LocatorProvider>(
+                builder: (context, weathervalue, locatorvalue, child) {
+                  if (locatorvalue.currentLocationName == null ||
+                      weathervalue.weather == null) {
+                    return const CircularProgressIndicator();
+                  }
+                  return Column(
+                    children: [
+                      Text(
+                        "${weathervalue.weather!.temp!.round().toStringAsFixed(1)}\u00b0c",
+                        style: const TextStyle(
+                          fontSize: 75,
+                          fontWeight: FontWeight.bold,
+                          color: Color.fromARGB(255, 255, 255, 255),
+                        ),
+                      ),
+                      Text(
+                        weathervalue.weather!.clouds ?? 'N/A',
+                        style: const TextStyle(
+                          fontSize: 30,
+                          color: Color.fromARGB(255, 255, 255, 255),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        weathervalue.weather!.name?.toUpperCase() ?? 'N/A',
+                        style: const TextStyle(
+                            fontSize: 30,
+                            fontWeight: FontWeight.w600,
+                            color: Color.fromARGB(255, 0, 0, 0)),
+                      ),
+                      SizedBox(height: 10),
+                      Text(
+                        DateFormat("hh:mm a | EEE   dd-MM-yyyy")
+                            .format(DateTime.now()),
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w500),
+                      )
+                    ],
+                  );
+                },
+              ),
+              const SizedBox(
+                height: 150,
+              ),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                width: 330,
+                height: 150,
+                child: Consumer2<WeatherProvider, LocatorProvider>(
+                  builder: (context, weathervalue, locatorvalue, child) {
+                    if (locatorvalue.currentLocationName == null) {
+                      // Display a message to select a location
+                      return const Center(
+                        child: Text(
+                          "Select a location...",
+                          style: TextStyle(
+                            fontSize: 25,
+                            color: Color.fromARGB(255, 255, 255, 255),
+                          ),
+                        ),
+                      );
+                    } else {
+                      final weather = weathervalue.weather;
+
+                      if (weather == null) {
+                        return const CircularProgressIndicator();
+                      }
+                      return Align(
+                        alignment: Alignment(0.9, 0.75),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            color: Colors.black.withOpacity(0.4),
+                          ),
+                          height: 180,
+                          child: Consumer2<WeatherProvider, LocatorProvider>(
+                            builder:
+                                (context, weathervalue, locatorvalue, child) {
+                              if (locatorvalue.currentLocationName == null) {
+                                // Display a message to select a location
+                                return const Center(
+                                  child: Text(
+                                    "Select a location...",
+                                    style: TextStyle(
+                                      fontSize: 25,
+                                      color: Colors.red,
+                                    ),
+                                  ),
+                                );
+                              } else {
+                                final weather = weathervalue.weather;
+
+                                if (weather == null) {
+                                  return const CircularProgressIndicator();
+                                }
+                                return Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Image.asset(
+                                              'assets/img/temperature-high.png',
+                                              height: 53,
+                                            ),
+                                            Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  "Temp Max",
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  "${weather.temp_max?.round().toStringAsFixed(2) ?? "N/A"}\u00b0c",
+                                                  style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: Colors.white),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                        Row(
+                                          children: [
+                                            Image.asset(
+                                              'assets/img/temperature-low.png',
+                                              height: 53,
+                                            ),
+                                            Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  "Temp low",
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  "${weather.temp_min?.round().toStringAsFixed(2) ?? "N/A"}\u00b0c",
+                                                  style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: Colors.white),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    Divider(
+                                      indent: 25,
+                                      endIndent: 33,
+                                      thickness: 2.5,
+                                      color: const Color.fromARGB(
+                                          255, 255, 255, 255),
+                                    ),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            CircleAvatar(
+                                              radius: 22,
+                                              backgroundImage: AssetImage(
+                                                  'assets/img/sunrise.png'),
+                                            ),
+                                            Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                const Text(
+                                                  "Sunrise",
+                                                  style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontWeight:
+                                                          FontWeight.bold),
+                                                ),
+                                                Text(
+                                                  DateFormat("hh:mm a").format(
+                                                    DateTime
+                                                        .fromMillisecondsSinceEpoch(
+                                                      weather.sunrise! * 1000,
+                                                    ),
+                                                  ),
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(width: 18),
+                                        Row(
+                                          children: [
+                                            CircleAvatar(
+                                              radius: 22,
+                                              backgroundImage: AssetImage(
+                                                  'assets/img/sunset.jpg'),
+                                            ),
+                                            Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                const Text(
+                                                  "Sunset",
+                                                  style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontWeight:
+                                                          FontWeight.bold),
+                                                ),
+                                                Text(
+                                                  DateFormat("hh:mm a").format(
+                                                    DateTime
+                                                        .fromMillisecondsSinceEpoch(
+                                                      weather.sunset! * 1000,
+                                                    ),
+                                                  ),
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                );
+                              }
+                            },
+                          ),
+                        ),
+                      );
+                    }
                   },
                 ),
-              ),
+              )
             ],
           ),
         ),
