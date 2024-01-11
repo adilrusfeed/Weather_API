@@ -14,7 +14,7 @@ class LocationService {
           return placemark[0];
         }
       } catch (e) {
-        log("error fetching location name");
+        log("error fetching location name $e");
       }
     }
     return null;

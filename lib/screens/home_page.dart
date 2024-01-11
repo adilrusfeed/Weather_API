@@ -19,7 +19,7 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final homeprovider = Provider.of<HomeProvider>(context, listen: false);
-    homeprovider.checkInternetAndFetchData(context);
+    checkInternetAndFetchData(context);
     var currentTime = DateTime.now().hour;
     String greeting;
     if (currentTime >= 4 && currentTime < 12) {
@@ -161,15 +161,14 @@ class HomePage extends StatelessWidget {
                 },
               ),
               const SizedBox(
-                height: 150,
+                height: 60,
               ),
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.black54,
+                  color: Color.fromARGB(136, 255, 255, 255),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                width: 330,
                 height: 150,
                 child: Consumer2<WeatherProvider, LocatorProvider>(
                   builder: (context, weathervalue, locatorvalue, child) {
@@ -177,10 +176,10 @@ class HomePage extends StatelessWidget {
                       // Display a message to select a location
                       return const Center(
                         child: Text(
-                          "Select a location...",
+                          "select a location or check location service",
                           style: TextStyle(
-                            fontSize: 25,
-                            color: Color.fromARGB(255, 255, 255, 255),
+                            fontSize: 20,
+                            color: Color.fromARGB(255, 0, 0, 0),
                           ),
                         ),
                       );
@@ -216,7 +215,7 @@ class HomePage extends StatelessWidget {
                                 final weather = weathervalue.weather;
 
                                 if (weather == null) {
-                                  return const CircularProgressIndicator();
+                                  return const Text("loading...");
                                 }
                                 return Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -389,5 +388,42 @@ class HomePage extends StatelessWidget {
         ),
       ),
     );
+  }
+  Future<void> checkInternetAndFetchData(context) async {
+    final hasInternet = await Provider.of<HomeProvider>(context). checkInternet();
+
+    if (!hasInternet) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('No Internet Connection!'),
+            content: const Text('Please check your internet connection.'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    } else {
+      // Internet is available, proceed with fetching data
+      final locationProvider =
+          Provider.of<LocatorProvider>(context, listen: false);
+
+      locationProvider.determinePosition().then((_) {
+        if (locationProvider.currentLocationName != null) {
+          var city = locationProvider.currentLocationName?.locality;
+          if (city != null) {
+            Provider.of<WeatherProvider>(context, listen: false)
+                .fetchWeatherDataByCity(city, context);
+          }
+        }
+      });
+    }
   }
 }

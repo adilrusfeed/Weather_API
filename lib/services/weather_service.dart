@@ -15,7 +15,7 @@ class WeatherService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        // log('$data');
+         log('$data');
         return WeatherModel.fromJson(data);
       } else {
         
