@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:weather_api/controller/home_provider.dart';
 import 'package:weather_api/controller/location_provider.dart';
@@ -10,10 +11,7 @@ import 'package:weather_api/controller/weather_provider.dart';
 TextEditingController cityCoontroller = TextEditingController();
 
 class HomePage extends StatelessWidget {
-  HomePage({super.key});
-
-  // final date = DateFormat(' EEEE dd-MM-yyyy').format(DateTime.now());
-  // final time = DateFormat('hh:mm a').format(DateTime.now());
+  const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -50,37 +48,35 @@ class HomePage extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    child: Row(
-                      children: [
-                        Icon(Icons.location_on, color: Colors.red),
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        Consumer<LocatorProvider>(
-                          builder: (context, value, child) => Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                value.currentLocationName?.locality ??
-                                    "unknown location",
-                                style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color.fromARGB(255, 255, 255, 255)),
+                  Row(
+                    children: [
+                      Icon(Icons.location_on, color: Colors.red),
+                      const SizedBox(
+                        width: 10,
+                      ),
+                      Consumer<LocatorProvider>(
+                        builder: (context, value, child) => Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              value.currentLocationName?.locality ??
+                                  "unknown location",
+                              style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color.fromARGB(255, 255, 255, 255)),
+                            ),
+                            Text(
+                              greeting,
+                              style: TextStyle(
+                                color: const Color.fromARGB(255, 0, 0, 0),
                               ),
-                              Text(
-                                greeting,
-                                style: TextStyle(
-                                  color: const Color.fromARGB(255, 0, 0, 0),
-                                ),
-                              )
-                            ],
-                          ),
+                            )
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -120,7 +116,7 @@ class HomePage extends StatelessWidget {
                 builder: (context, weathervalue, locatorvalue, child) {
                   if (locatorvalue.currentLocationName == null ||
                       weathervalue.weather == null) {
-                    return const CircularProgressIndicator();
+                    return Lottie.asset("assets/img/loading.json");
                   }
                   return Column(
                     children: [
@@ -166,17 +162,17 @@ class HomePage extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Color.fromARGB(136, 255, 255, 255),
+                  color: Color.fromARGB(0, 255, 255, 255),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                height: 150,
+                height: 180,
                 child: Consumer2<WeatherProvider, LocatorProvider>(
                   builder: (context, weathervalue, locatorvalue, child) {
                     if (locatorvalue.currentLocationName == null) {
                       // Display a message to select a location
                       return const Center(
                         child: Text(
-                          "select a location or check location service",
+                          "fetching data",
                           style: TextStyle(
                             fontSize: 20,
                             color: Color.fromARGB(255, 0, 0, 0),
@@ -187,7 +183,7 @@ class HomePage extends StatelessWidget {
                       final weather = weathervalue.weather;
 
                       if (weather == null) {
-                        return const CircularProgressIndicator();
+                        return Text("searching");
                       }
                       return Align(
                         alignment: Alignment(0.9, 0.75),
@@ -389,8 +385,10 @@ class HomePage extends StatelessWidget {
       ),
     );
   }
+
   Future<void> checkInternetAndFetchData(context) async {
-    final hasInternet = await Provider.of<HomeProvider>(context). checkInternet();
+    final hasInternet =
+        await Provider.of<HomeProvider>(context).checkInternet();
 
     if (!hasInternet) {
       showDialog(
